@@ -1,15 +1,15 @@
 -module(arp_parser).
--export([parse/1, print_arp/1]).
+-export([parse/1, print_arp/1, test/0]).
 
 %% Запись для хранения разобранного ARP-пакета
 -record(arp_packet, {
-    hardware_type,   %% Hardware type (2 байта)
-    protocol_type,   %% Protocol type (2 байта)
-    hardware_size,   %% Hardware size (1 байт)
-    protoco_size,   %% Protocol size (1 байт)
-    opcode,      %% Opcode (2 байта)
-    sender_mac,     %% Sender MAC (6 байт)
-    sender_ip,     %% Sender IP (4 байта)
+    htype,   %% Hardware type (2 байта)
+    ptype,   %% Protocol type (2 байта)
+    hsize,   %% Hardware size (1 байт)
+    psize,   %% Protocol size (1 байт)
+    opcode,  %% Opcode (2 байта)
+    sha,     %% Sender MAC (6 байт)
+    spa,     %% Sender IP (4 байта)
     tha,     %% Target MAC (6 байт)
     tpa      %% Target IP (4 байта)
 }).
@@ -21,21 +21,19 @@
 parse(Binary) when is_binary(Binary) ->
     case byte_size(Binary) of
         28 ->
-            %% Все многобайтовые числа хранятся в сетевом порядке (big-endian)
-            <<HType:16/big, PType:16/big, HSize:8, PSize:8,
-              Op:16/big, SHa:6/binary, SPa:4/binary,
-              THa:6/binary, TPa:4/binary>> = Binary,
-            %% Дополнительная проверка на соответствие типичным размерам (опционально)
+            %% Все многобайтовые числа хранятся в сетевом порядке
+            <<HType:16/big, PType:16/big, HSize:8, PSize:8, Op:16/big, SHa:6/binary, SPa:4/binary, THa:6/binary, TPa:4/binary>> = Binary,
+            %% Дополнительная проверка на соответствие типичным размерам
             case {HSize, PSize} of
                 {6, 4} ->
                     {ok, #arp_packet{
-                        hardware_type = HType,
-                        protocol_type = PType,
-                        hardware_size = HSize,
-                        protoco_size = PSize,
-                        opcode    = Op,
-                        sender_mac   = SHa,
-                        sender_ip   = SPa,
+                        htype = HType,
+                        ptype = PType,
+                        hsize = HSize,
+                        psize = PSize,
+                        opcode = Op,
+                        sha   = SHa,
+                        spa   = SPa,
                         tha   = THa,
                         tpa   = TPa
                     }};
@@ -48,18 +46,18 @@ parse(Binary) when is_binary(Binary) ->
 parse(_) ->
     {error, not_binary}.
 
-%% ===================================================================
+%% ================================================================
 %% print_arp/1 – вывод содержимого записи ARP-пакета
-%% ===================================================================
+%% ================================================================
 -spec print_arp(#arp_packet{}) -> ok.
 print_arp(#arp_packet{
-    hardware_type = HType,
-    protocol_type = PType,
-    hardware_size = HSize,
-    protoco_size = PSize,
+    htype = HType,
+    ptype = PType,
+    hsize = HSize,
+    psize = PSize,
     opcode    = Op,
-    sender_mac   = SHa,
-    sender_ip   = SPa,
+    sha   = SHa,
+    spa   = SPa,
     tha   = THa,
     tpa   = TPa
 }) ->
@@ -90,9 +88,8 @@ format_ip(Ip) when byte_size(Ip) =:= 4 ->
     ).
 
 %% ===================================================================
-%% Пример тестового запуска (можно закомментировать, если не нужно)
+%% Пример тестового запуска 
 %% ===================================================================
--ifdef(TEST).
 test() ->
     TestPacket = <<
         16#00, 16#01, 16#08, 16#00, 16#06, 16#04, 16#00, 16#01,
@@ -106,6 +103,5 @@ test() ->
         {error, Reason} ->
             io:format("Error: ~p~n", [Reason])
     end.
--endif.
 
 
