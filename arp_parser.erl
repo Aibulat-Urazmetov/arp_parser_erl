@@ -14,7 +14,7 @@
     tpa 
 }).
 
-%% parse/1 – разбор ARP-пакета из бинарных данных
+%% Функция разбора ARP из бинарных данных
 -spec parse(binary()) -> {ok, #arp_packet{}} | {error, term()}.
 parse(Binary) when is_binary(Binary) ->
     case byte_size(Binary) of
@@ -78,13 +78,11 @@ print_arp(#arp_packet{
     io:format("Target MAC: ~s~n", [format_mac(THa)]),
     io:format("Target IP: ~s~n", [format_ip(TPa)]).
 
-%% -------------------------------------------------------------------
 %% Вспомогательные функции форматирования MAC и IP
-%% -------------------------------------------------------------------
 format_mac(Mac) when byte_size(Mac) =:= 6 ->
     lists:flatten(
         io_lib:format("~2.16.0B:~2.16.0B:~2.16.0B:~2.16.0B:~2.16.0B:~2.16.0B",
-                      [binary:at(Mac, I) || I <- lists:seq(0,5)])
+            [binary:at(Mac, I) || I <- lists:seq(0,5)])
     ).
 
 format_ip(Ip) when byte_size(Ip) =:= 4 ->
